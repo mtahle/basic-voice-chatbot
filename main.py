@@ -3,13 +3,26 @@ from gtts import gTTS
 from playsound import playsound
 #import openai_secret_manager
 import openai
+import json
  
-openai.api_key = "API_KEY"
+openai.api_key = ""
+messages= {}
+system_message = {}
+user_message = {}
+user_assistant = {}
+user_assistant["role"] = "assistant"
+user_assistant["content"] = ""
+user_message["role"] = "user"
+user_message["content"] = "Why should DevOps engineer learn kubernetes?"
+system_message["role"] = "system"
+system_message["content"] = "You are a chatbot"
+messages = [system_message,user_message,user_assistant]
+json_messages = json.dumps(messages)
  
 def generate_response(prompt):
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=prompt,
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=prompt,
         max_tokens=100,
         top_p=1,
         n=1,
@@ -18,7 +31,7 @@ def generate_response(prompt):
         frequency_penalty=0.0,
         presence_penalty=0.0
     )
-    return response.choices[0].text.strip()
+    return response.choices[0].message
  
  
 # Define a function to recognize speech
@@ -49,9 +62,12 @@ while True:
     text = recognize_speech()
     if text != "":
         # Do something with the text (e.g. generate a response using ChatGPT)
- 
-        response = generate_response(text)
-        print("ChatGPT " + response)
-        speak_text(response)
+        user_message["content"] = text
+        print("messages:", messages, "was sent and waiting for the ChatGPT response")
+        response = generate_response(messages)
+        print(response["content"])
+        speak_text(response["content"])
+        user_assistant["content"] = response["content"]
+        print("latest messages:", messages)
     else:
         break
