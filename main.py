@@ -3,8 +3,12 @@ from gtts import gTTS
 from playsound import playsound
 import openai
 import json
+import os
+
+
+
  
-openai.api_key = ""
+openai.api_key = "sk-key"
 messages= {}
 system_message = {}
 user_message = {}
@@ -22,13 +26,6 @@ def generate_response(prompt):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=prompt,
-        max_tokens=100,
-        top_p=1,
-        n=1,
-        stop=None,
-        temperature=0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0
     )
     return response.choices[0].message
  
@@ -40,7 +37,7 @@ def recognize_speech():
         print("Say something!")
         audio = r.listen(source)
         try:
-            text = r.recognize_google(audio)
+            text = r.recognize_google(audio, language="ar-JO")
             print("You said: " + text)
             return text
         except sr.UnknownValueError:
@@ -52,21 +49,31 @@ def recognize_speech():
  
 # Define a function to speak text
 def speak_text(text):
-    tts = gTTS(text)
+    tts = gTTS(text, lang="ar")
     tts.save("output.mp3")
-    playsound("output.mp3")
+    try:
+        playsound("output.mp3")
+    except:
+        print("Error playing sound")
+    finally:
+        os.remove("output.mp3")
+  
  
 # Start the voice assistant
 while True:
-    text = recognize_speech()
-    if text != "":
-        # Do something with the text (e.g. generate a response using ChatGPT)
-        user_message["content"] = text
-        print("messages:", messages, "was sent and waiting for the ChatGPT response")
-        response = generate_response(messages)
-        print(response["content"])
-        speak_text(response["content"])
-        user_assistant["content"] = response["content"]
-        print("latest messages:", messages)
-    else:
+    try:
+
+        text = recognize_speech()
+        if text != "":
+            # Do something with the text (e.g. generate a response using ChatGPT)
+            user_message["content"] = text
+            # print("messages:", messages, "was sent and waiting for the ChatGPT response")
+            response = generate_response(messages)
+            print(response["content"])
+            speak_text(response["content"])
+            user_assistant["content"] = response["content"]
+            print("latest messages:", messages)
+        else:
+            continue
+    except KeyboardInterrupt:
         break
